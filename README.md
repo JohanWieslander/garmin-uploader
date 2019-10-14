@@ -1,5 +1,11 @@
-Garmin Uploader
+Garmin Uploader, the tapiriik edition
 ===============
+
+Modified [garmin-uploader](https://github.com/La0/garmin-uploader) to support
+bulk uploading of files (synced to e.g. dropbox). Activity names and types are
+parsed from the file name, 2019-10-03_11-13-37_Lunch Run_Running.tcx => "Lunch Run", "running".
+
+Also fixed a issue with uploading non ascii filenames
 
 Garmin Uploader (aka gupload), uploads files 
 (.tcx, .gpx, and .fit files ) created by Garmin fitness 
@@ -14,22 +20,19 @@ Requirements
 
 Tested on Python 2.7 and Python 3.5
 
-[![Build Status](https://travis-ci.org/La0/garmin-uploader.svg?branch=master)](https://travis-ci.org/La0/garmin-uploader)
-
 Install
 -------
 
-You can install garmin-uploader as any othe package availale on PyPi with pip:
-
-
 On Linux
 ```
-pip install garmin-uploader --user
+
+pip install --user requirements.txt
 ```
 
 On Windows
 ```
-pip install garmin-uploader
+pip install .
+pip install requirements.txt
 ```
 
 Required Python Modules: (automatically installed by pip)
@@ -108,6 +111,14 @@ optional arguments:
 ```
 
 Examples
+--------
+Bulk upload all files in a directory and set activity name and type based on their filename
+e.g. "2019-10-03_11-13-37_Lunch Run_Running.tcx" -> Lunch Run, running:
+```
+gupload -u myusername -p mypassword ~/dropbox/Apps/tapiriik/
+```
+
+Untested
 --------
 Upload file and set activity name:
 ```
