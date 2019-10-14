@@ -85,29 +85,15 @@ class Activity(object):
 
         if uploaded:
             logger.info('Uploaded activity {}'.format(self))
-
-            # Set activity name if specified
-            if self.name or self.type:
-                try:
-                    api.set_activity_name_type(user.session, self)
-                except GarminAPIException as e:
-                    logger.warning('Activity name and type update failed: {}'.format(e))
-
-            elif self.name:
-                try:
-                    api.set_activity_name(user.session, self)
-                except GarminAPIException as e:
-                    logger.warning('Activity name update failed: {}'.format(e))
-
-            # Set activity type if specified
-            elif self.type:
-                try:
-                    api.set_activity_type(user.session, self)
-                except GarminAPIException as e:
-                    logger.warning('Activity type update failed: {}'.format(e))
-
         else:
             logger.info('Activity already uploaded {}'.format(self))
+
+        # Set activity name if specified
+        if self.name or self.type:
+            try:
+                api.set_activity_name_type(user.session, self)
+            except GarminAPIException as e:
+                logger.warning('Activity name and type update failed: {}'.format(e))
 
         return True
 
@@ -212,6 +198,8 @@ class Workflow():
             if activity_type is not None:
                 if activity_type == "swimming":
                     activity_type = "lap_swimming"
+                if activity_type == "gym":
+                    activity_type = "strength_training"
             logger.info("Found activity: %s, of type: %s", activity_name, activity_type)
             activities.append(Activity(p, activity_name, activity_type))
 

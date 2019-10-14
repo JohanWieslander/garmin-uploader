@@ -1,7 +1,3 @@
-import os
-import shutil
-import tempfile
-
 import requests
 
 import re
@@ -33,7 +29,7 @@ class GarminAPI:
 
     # This strange header is needed to get auth working
     common_headers = {
-        'nk': 'NT',
+        'NK': 'NT',
     }
 
     def authenticate(self, username, password):
@@ -169,68 +165,32 @@ class GarminAPI:
         """
         assert activity.id is None
 
-        tf = tempfile.NamedTemporaryFile()
-        tempfile_name = tf.name
-        tf.close()
-        try:
-            shutil.copy2(activity.path, tempfile_name)
-            file = open(tempfile_name, "rb")
+        # Upload file as multipart form
+        files = {
+            "file": (activity.filename, activity.open()),
+        }
+        url = '{}/{}'.format(URL_UPLOAD, activity.extension)
+        res = session.post(url, files=files, headers=self.common_headers)
 
-            files = dict(data=(tempfile_name, file))
+        # HTTP Status can either be OK or Conflict
+        if res.status_code not in (200, 201, 409):
+            if res.status_code == 412:
+                logger.error('You may have to give explicit consent for uploading files to Garmin')  # noqa
+            raise GarminAPIException('Failed to upload {}'.format(activity))
 
-            url = '{}/{}'.format(URL_UPLOAD, activity.extension)
-            res = session.post(url, files=files, headers=self.common_headers)
-
-            # HTTP Status can either be OK or Conflict
-            if res.status_code not in (200, 201, 409):
-                if res.status_code == 412:
-                    logger.error('You may have to give explicit consent for uploading files to Garmin')  # noqa
-                raise GarminAPIException('Failed to upload {}'.format(activity))
-
-            response = res.json()['detailedImportResult']
-            if len(response["successes"]) == 0:
-                if len(response["failures"]) > 0:
-                    if response["failures"][0]["messages"][0]['code'] == 202:
-                        # Activity already exists
-                        return response["failures"][0]["internalId"], False
-                    else:
-                        raise GarminAPIException(response["failures"][0]["messages"])  # noqa
+        response = res.json()['detailedImportResult']
+        if len(response["successes"]) == 0:
+            if len(response["failures"]) > 0:
+                if response["failures"][0]["messages"][0]['code'] == 202:
+                    # Activity already exists
+                    return response["failures"][0]["internalId"], False
                 else:
-                    raise GarminAPIException('Unknown error: {}'.format(response))
+                    raise GarminAPIException(response["failures"][0]["messages"])  # noqa
             else:
-                # Upload was successsful
-                return response["successes"][0]["internalId"], True
-        finally:
-            try:
-                if os.path.exists(tempfile_name):
-                    os.remove(tempfile_name)
-                else:
-                    logger.warning("Temp file %s does not exist", tempfile_name)
-            except:
-                logger.error("Failed removing %s", tempfile_name)
-
-
-    def set_activity_name_type(self, session, activity):
-        """
-        Update the activity name
-        """
-        assert activity.id is not None
-
-        data = {'activityId': activity.id}
-        if activity.name is not None:
-            data['activityName'] = activity.name
+                raise GarminAPIException('Unknown error: {}'.format(response))
         else:
-            data['activityName'] = activity.type
-        if activity.type is not None:
-            data['activityTypeDTO'] = {"typeKey": activity.type}
-
-        url = '{}/{}'.format(URL_ACTIVITY_BASE, activity.id)
-
-        encoding_headers = {"Content-Type": "application/json; charset=UTF-8"} # see Tapiriik
-
-        res = session.put(url, json=data, headers=encoding_headers)
-        if not res.ok:
-            raise GarminAPIException('Activity name or type not set: {}'.format(res.content))
+            # Upload was successsful
+            return response["successes"][0]["internalId"], True
 
     def set_activity_name(self, session, activity):
         """
