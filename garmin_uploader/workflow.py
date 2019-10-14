@@ -87,14 +87,20 @@ class Activity(object):
             logger.info('Uploaded activity {}'.format(self))
 
             # Set activity name if specified
-            if self.name:
+            if self.name or self.type:
+                try:
+                    api.set_activity_name_type(user.session, self)
+                except GarminAPIException as e:
+                    logger.warning('Activity name and type update failed: {}'.format(e))
+
+            elif self.name:
                 try:
                     api.set_activity_name(user.session, self)
                 except GarminAPIException as e:
                     logger.warning('Activity name update failed: {}'.format(e))
 
             # Set activity type if specified
-            if self.type:
+            elif self.type:
                 try:
                     api.set_activity_type(user.session, self)
                 except GarminAPIException as e:
@@ -198,10 +204,16 @@ class Workflow():
             self.activity_name = None
 
         # Build activities from valid paths
-        activities = [
-           Activity(p, self.activity_name, self.activity_type)
-           for p in valid_paths
-        ]
+        activities = []
+        for p in valid_paths:
+            filebase = os.path.splitext(p)[0].split("_")
+            activity_name = filebase[2]
+            activity_type = filebase[3].lower()
+            if activity_type is not None:
+                if activity_type == "swimming":
+                    activity_type = "lap_swimming"
+            logger.info("Found activity: %s, of type: %s", activity_name, activity_type)
+            activities.append(Activity(p, activity_name, activity_type))
 
         # Pull in file info from csv files and apppend activities
         for csv_file in csv_files:
