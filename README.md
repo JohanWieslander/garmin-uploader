@@ -11,7 +11,9 @@ Garmin Uploader (aka gupload), uploads files
 (.tcx, .gpx, and .fit files ) created by Garmin fitness 
 devices to the http://connect.garmin.com web site.
 
+
 :star: Yes, it works with the latest (~~April 2018~~ ~~April 2019~~ ~~January 2021~~ ~~February 2021~~ May 2021) Garmin connect authentication update.
+
 
 This is an up to date version of [GCPUploader](https://github.com/dlotton/GcpUploader) by Dave Lotton. Thanks Dave for creating this tool :+1:
 
@@ -25,8 +27,7 @@ Install
 
 On Linux
 ```
-
-pip install --user requirements.txt
+pip install garmin-uploader --user
 ```
 
 On Windows

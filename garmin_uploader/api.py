@@ -266,9 +266,13 @@ class GarminAPI:
             data['activityTypeDTO'] = {"typeKey": activity.type}
 
         url = '{}/{}'.format(URL_ACTIVITY_BASE, activity.id)
-
+        data = {
+            'activityId': activity.id,
+            'activityName': activity.name,
+        }
         headers = dict(self.common_headers)  # clone
         headers['X-HTTP-Method-Override'] = 'PUT'  # weird. again.
         res = session.post(url, json=data, headers=headers)
         if not res.ok:
-            raise GarminAPIException('Activity name or type not set: {}'.format(res.content))
+            raise GarminAPIException('Activity name not set: {}'.format(res.content))  # noqa
+
