@@ -41,6 +41,7 @@ class GarminAPI:
         """
         # Use Cloudscraper to avoid cloudflare spam detection
         session = cloudscraper.create_scraper()
+        logger.info('Using cloud scraper lib')
 
         # Request sso hostname
         sso_hostname = None
@@ -266,10 +267,6 @@ class GarminAPI:
             data['activityTypeDTO'] = {"typeKey": activity.type}
 
         url = '{}/{}'.format(URL_ACTIVITY_BASE, activity.id)
-        data = {
-            'activityId': activity.id,
-            'activityName': activity.name,
-        }
         headers = dict(self.common_headers)  # clone
         headers['X-HTTP-Method-Override'] = 'PUT'  # weird. again.
         res = session.post(url, json=data, headers=headers)
