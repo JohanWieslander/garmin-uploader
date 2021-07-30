@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 
 import re
 from garmin_uploader import logger
@@ -39,12 +39,8 @@ class GarminAPI:
         on Garmin Connect as closely as possible
         Outputs a Requests session, loaded with precious cookies
         """
-        # Use a valid Browser user agent
-        # TODO: use several UA picked randomly
-        session = requests.Session()
-        session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:48.0) Gecko/20100101 Firefox/50.0',  # noqa
-        })
+        # Use Cloudscraper to avoid cloudflare spam detection
+        session = cloudscraper.create_scraper()
 
         # Request sso hostname
         sso_hostname = None
@@ -254,3 +250,25 @@ class GarminAPI:
         res = session.post(url, json=data, headers=headers)
         if not res.ok:
             raise GarminAPIException('Activity type not set: {}'.format(res.content))  # noqa
+
+    def set_activity_name_type(self, session, activity):
+        """
+        Update the activity name
+        """
+        assert activity.id is not None
+        logger.info('Setting activity: {} , to type: {}'.format(activity.name, activity.type))
+        data = {'activityId': activity.id}
+        if activity.name is not None:
+            data['activityName'] = activity.name
+        else:
+            data['activityName'] = activity.type
+        if activity.type is not None:
+            data['activityTypeDTO'] = {"typeKey": activity.type}
+
+        url = '{}/{}'.format(URL_ACTIVITY_BASE, activity.id)
+
+        headers = dict(self.common_headers)  # clone
+        headers['X-HTTP-Method-Override'] = 'PUT'  # weird. again.
+        res = session.post(url, json=data, headers=headers)
+        if not res.ok:
+            raise GarminAPIException('Activity name or type not set: {}'.format(res.content))

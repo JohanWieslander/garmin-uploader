@@ -1,2 +1,2 @@
-requests>=2.10.0
+cloudscraper==1.2.58
 six>=1.10.0
